@@ -1,0 +1,58 @@
+{
+  "name": "log-monitoring-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Typed, layered backend for a log monitoring dashboard",
+  "type": "module",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "prisma generate && tsc --noEmit",
+    "pretest": "prisma generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run tests/database.integration.test.ts",
+    "pretest:integration": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7",
+    "@prisma/client": "7",
+    "bcrypt": "6",
+    "cookie-parser": "1",
+    "cors": "2",
+    "dotenv": "17",
+    "express": "5",
+    "express-rate-limit": "8",
+    "helmet": "8",
+    "jsonwebtoken": "9",
+    "pg": "8",
+    "pino": "10",
+    "pino-http": "11",
+    "zod": "4"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "mysql2": "3.24.6"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "6",
+    "@types/cookie-parser": "1",
+    "@types/cors": "2",
+    "@types/express": "5",
+    "@types/jsonwebtoken": "9",
+    "@types/node": "24",
+    "@types/pg": "8",
+    "@types/supertest": "6",
+    "prisma": "7",
+    "supertest": "7",
+    "tsx": "4",
+    "typescript": "5.9",
+    "vitest": "4"
+  }
+}

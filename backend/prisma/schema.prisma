@@ -1,0 +1,107 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LogLevel {
+  TRACE
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+enum MonitorStatus {
+  UP
+  DEGRADED
+  DOWN
+  RESTRICTED
+  TIMEOUT
+}
+
+// HTTP availability samples contain no credentials or upstream response payloads.
+model ApiMonitorCheck {
+  components     Json          @default("[]") @db.JsonB
+  id             String        @id @default(uuid()) @db.Uuid
+  monitorKey     String        @db.VarChar(64)
+  status         MonitorStatus
+  httpStatus     Int?
+  responseTimeMs Int
+  checkedAt      DateTime       @db.Timestamptz(3)
+  reason         String        @db.VarChar(200)
+
+  @@index([monitorKey, checkedAt(sort: Desc), id(sort: Desc)])
+}
+
+model User {
+  id           String               @id @default(uuid()) @db.Uuid
+  email        String               @unique @db.VarChar(254)
+  name         String               @db.VarChar(100)
+  passwordHash String               @db.VarChar(60)
+  createdAt    DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime             @updatedAt @db.Timestamptz(3)
+  projects     Project[]
+  tokenFamilies RefreshTokenFamily[]
+}
+
+model Project {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  ownerId      String   @db.Uuid
+  apiKeyHash   String   @unique @db.Char(64)
+  apiKeyPrefix String   @db.VarChar(16)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  logs         Log[]
+
+  @@index([ownerId, createdAt(sort: Desc)])
+}
+
+model Log {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String   @db.Uuid
+  level      LogLevel
+  message    String   @db.Text
+  stackTrace String?  @db.Text
+  metadata   Json?    @db.JsonB
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([projectId, level, createdAt(sort: Desc), id(sort: Desc)])
+}
+
+// A family represents one login. Its expiry is absolute, even after rotation.
+model RefreshTokenFamily {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  expiresAt DateTime         @db.Timestamptz(3)
+  revokedAt DateTime?        @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions  RefreshSession[]
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model RefreshSession {
+  id         String             @id @default(uuid()) @db.Uuid
+  familyId   String             @db.Uuid
+  tokenHash  String             @unique @db.Char(64)
+  expiresAt  DateTime           @db.Timestamptz(3)
+  consumedAt DateTime?          @db.Timestamptz(3)
+  createdAt  DateTime           @default(now()) @db.Timestamptz(3)
+  family     RefreshTokenFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([expiresAt])
+}

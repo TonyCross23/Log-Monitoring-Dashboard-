@@ -1,0 +1,12 @@
+node_modules/
+dist/
+backend/src/generated/
+.env
+.env.*
+!.env.example
+coverage/
+*.log
+.vite/
+.agents/
+.aws/
+.codex/
